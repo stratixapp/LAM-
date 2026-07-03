@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Use — LAM v9 by Stratix Ecosystem</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand: #2563EB; --text: #0D1117; --text-2: #374151; --text-3: #6B7280;
+      --border: #E5E7EB; --bg: #F9FAFB; --surface: #FFFFFF;
+      --radius: 12px; --font: 'Geist', system-ui, sans-serif;
+    }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.7; }
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { font-size: 20px; font-weight: 800; color: var(--brand); letter-spacing: -0.5px; }
+    .logo span { color: var(--text-3); font-weight: 400; font-size: 13px; margin-left: 8px; }
+    .back-btn { font-size: 13px; color: var(--brand); text-decoration: none; font-weight: 600; }
+    .hero {
+      background: linear-gradient(135deg, #F0FDF4 0%, #EFF6FF 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 56px 24px 48px; text-align: center;
+    }
+    .hero h1 { font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+    .hero p { font-size: 15px; color: var(--text-3); max-width: 560px; margin: 0 auto; }
+    .hero .meta { font-size: 12px; color: var(--text-3); margin-top: 16px; }
+    .content { max-width: 780px; margin: 0 auto; padding: 48px 24px 80px; }
+    .toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 40px; }
+    .toc h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-3); margin-bottom: 12px; }
+    .toc ol { padding-left: 18px; }
+    .toc li { font-size: 13px; margin-bottom: 6px; }
+    .toc a { color: var(--brand); text-decoration: none; font-weight: 500; }
+    section { margin-bottom: 40px; }
+    section h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
+    section h2 .num { width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    p { font-size: 14px; color: var(--text-2); margin-bottom: 12px; }
+    ul, ol { padding-left: 20px; margin-bottom: 12px; }
+    li { font-size: 14px; color: var(--text-2); margin-bottom: 6px; }
+    .warn-box { background: #FFFBEB; border: 1px solid #FCD34D; border-radius: 10px; padding: 16px 20px; margin: 16px 0; font-size: 13px; color: #92400E; }
+    .warn-box strong { display: block; font-size: 14px; margin-bottom: 4px; }
+    .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+    .contact-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+    .contact-card .icon { font-size: 24px; margin-bottom: 8px; }
+    .contact-card .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-3); margin-bottom: 4px; }
+    .contact-card a { font-size: 13px; color: var(--brand); text-decoration: none; font-weight: 500; word-break: break-all; }
+    footer { background: var(--surface); border-top: 1px solid var(--border); padding: 32px 24px; text-align: center; }
+    footer .links { display: flex; gap: 20px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
+    footer a { font-size: 13px; color: var(--brand); text-decoration: none; font-weight: 500; }
+    footer p { font-size: 12px; color: var(--text-3); }
+    @media (max-width: 600px) { .hero h1 { font-size: 26px; } .content { padding: 32px 16px 60px; } }
+  </style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="logo">LAM <span>by Stratix Ecosystem</span></div>
+  <a href="dashboard.html" class="back-btn">← Back to App</a>
+</nav>
+
+<div class="hero">
+  <h1>📋 Terms of Use</h1>
+  <p>Please read these terms carefully before using LAM. By using the application, you agree to be bound by these terms.</p>
+  <div class="meta">Effective Date: 1 January 2025 &nbsp;·&nbsp; Last Updated: June 2025 &nbsp;·&nbsp; Version 1.0</div>
+</div>
+
+<div class="content">
+
+  <div class="toc">
+    <h3>Table of Contents</h3>
+    <ol>
+      <li><a href="#t1">Acceptance of Terms</a></li>
+      <li><a href="#t2">Description of Service</a></li>
+      <li><a href="#t3">Eligibility</a></li>
+      <li><a href="#t4">User Accounts and Access</a></li>
+      <li><a href="#t5">Acceptable Use</a></li>
+      <li><a href="#t6">Intellectual Property</a></li>
+      <li><a href="#t7">Data Ownership</a></li>
+      <li><a href="#t8">Disclaimer of Warranties</a></li>
+      <li><a href="#t9">Limitation of Liability</a></li>
+      <li><a href="#t10">GST, Tax, and Compliance Disclaimer</a></li>
+      <li><a href="#t11">Payment Processing</a></li>
+      <li><a href="#t12">Termination</a></li>
+      <li><a href="#t13">Governing Law</a></li>
+      <li><a href="#t14">Changes to Terms</a></li>
+      <li><a href="#t15">Contact Us</a></li>
+    </ol>
+  </div>
+
+  <section id="t1">
+    <h2><span class="num">1</span> Acceptance of Terms</h2>
+    <p>These Terms of Use ("Terms") constitute a legally binding agreement between you ("User") and <strong>Stratix Ecosystem</strong> ("we", "us", "our") regarding your use of the LAM (Logistics Assets Management) v9 application ("LAM", "the App", "the Service").</p>
+    <p>By installing, accessing, or using LAM, you acknowledge that you have read, understood, and agree to be bound by these Terms and our Privacy Policy. If you do not agree to these Terms, do not use the application.</p>
+  </section>
+
+  <section id="t2">
+    <h2><span class="num">2</span> Description of Service</h2>
+    <p>LAM is a Progressive Web Application (PWA) that provides logistics and business management tools including fleet management, trip tracking, invoice generation, GST compliance tools, driver management, and financial reporting. The core application operates entirely on the user's device (offline-first) using browser IndexedDB storage.</p>
+    <p>Optional cloud sync features are available and require the user to configure their own Supabase project. Optional payment features require a Razorpay account.</p>
+  </section>
+
+  <section id="t3">
+    <h2><span class="num">3</span> Eligibility</h2>
+    <p>You must be at least 18 years of age and have the legal capacity to enter into contracts to use LAM. By using the App, you represent that you meet these requirements.</p>
+    <p>LAM is intended for use by businesses and individuals operating in India for legitimate business management purposes. Use of the App for unlawful purposes is strictly prohibited.</p>
+  </section>
+
+  <section id="t4">
+    <h2><span class="num">4</span> User Accounts and Access</h2>
+    <p>LAM uses a local PIN-based authentication system. You are responsible for:</p>
+    <ul>
+      <li>Maintaining the confidentiality of all PIN codes configured in the App</li>
+      <li>All activities that occur under your LAM user accounts on your device</li>
+      <li>Ensuring that users with Driver, Dispatcher, or Accountant roles have appropriate authorisation from the business Owner</li>
+      <li>Immediately revoking access for any user who should no longer have access (via Settings → Users)</li>
+    </ul>
+    <p>Stratix Ecosystem is not responsible for any loss or damage resulting from unauthorised access due to failure to maintain PIN security.</p>
+  </section>
+
+  <section id="t5">
+    <h2><span class="num">5</span> Acceptable Use</h2>
+    <p>You agree to use LAM only for lawful purposes and in compliance with all applicable Indian and local laws and regulations. You agree <strong>not</strong> to:</p>
+    <ul>
+      <li>Use LAM to record, facilitate, or disguise any illegal business activity</li>
+      <li>Generate false or fraudulent invoices, GST returns, or e-Way Bills</li>
+      <li>Reverse-engineer, decompile, or attempt to extract the source code of LAM</li>
+      <li>Use LAM to harass, defame, or harm any individual</li>
+      <li>Attempt to circumvent the role-based access controls</li>
+      <li>Use LAM in a manner that could damage, disable, or impair the App</li>
+      <li>Distribute, resell, or sublicense LAM without written permission from Stratix Ecosystem</li>
+    </ul>
+  </section>
+
+  <section id="t6">
+    <h2><span class="num">6</span> Intellectual Property</h2>
+    <p>LAM and all its components — including but not limited to the user interface design, source code, module architecture, PDF templates, and associated documentation — are the exclusive intellectual property of <strong>Stratix Ecosystem</strong>.</p>
+    <p>You are granted a limited, non-exclusive, non-transferable, revocable licence to use LAM for your own internal business purposes. This licence does not include the right to copy, modify, distribute, sell, or create derivative works based on LAM without prior written consent.</p>
+    <p>All business data you enter into LAM (invoices, customer records, trip data, etc.) remains your property. Stratix Ecosystem claims no ownership over your business data.</p>
+  </section>
+
+  <section id="t7">
+    <h2><span class="num">7</span> Data Ownership and Responsibility</h2>
+    <p>You own all business data entered into LAM. Since LAM is local-first, <strong>you are solely responsible</strong> for:</p>
+    <ul>
+      <li>Taking regular backups of your data (use Settings → Backup Now)</li>
+      <li>Ensuring data accuracy for GST filings and compliance purposes</li>
+      <li>The security of your device on which LAM data is stored</li>
+      <li>Complying with all applicable data protection laws regarding customer and employee data you store in LAM</li>
+    </ul>
+    <div class="warn-box">
+      <strong>⚠️ Data Loss Warning</strong>
+      Clearing your browser's site data, reinstalling the browser, or resetting your device will permanently delete all LAM data. Stratix Ecosystem cannot recover lost data. Please back up regularly.
+    </div>
+  </section>
+
+  <section id="t8">
+    <h2><span class="num">8</span> Disclaimer of Warranties</h2>
+    <p>LAM is provided <strong>"as is"</strong> and <strong>"as available"</strong>, without warranty of any kind, express or implied. Stratix Ecosystem expressly disclaims all warranties including but not limited to:</p>
+    <ul>
+      <li>Implied warranties of merchantability or fitness for a particular purpose</li>
+      <li>Warranties that LAM will be error-free, uninterrupted, or free of bugs</li>
+      <li>Warranties regarding the accuracy of GST calculations, e-Way Bill data, or financial reports generated by LAM</li>
+    </ul>
+    <p>You use LAM at your own risk.</p>
+  </section>
+
+  <section id="t9">
+    <h2><span class="num">9</span> Limitation of Liability</h2>
+    <p>To the maximum extent permitted by applicable law, Stratix Ecosystem and its founders, employees, and affiliates shall not be liable for any:</p>
+    <ul>
+      <li>Indirect, incidental, special, consequential, or punitive damages</li>
+      <li>Loss of data, profits, revenue, business, or goodwill</li>
+      <li>Damages arising from GST penalties, tax assessments, or compliance failures based on LAM-generated reports</li>
+      <li>Damages arising from data loss due to browser/device failure or user error</li>
+    </ul>
+    <p>In no event shall Stratix Ecosystem's total liability exceed ₹5,000 (Indian Rupees five thousand only) for any claim arising from your use of LAM, regardless of the form of action.</p>
+  </section>
+
+  <section id="t10">
+    <h2><span class="num">10</span> GST, Tax, and Compliance Disclaimer</h2>
+    <p>LAM generates GST-related documents (GSTR-1, GSTR-3B, e-Way Bills, invoices) as a tool to assist with compliance. <strong>LAM is not a tax advisory service.</strong></p>
+    <div class="warn-box">
+      <strong>⚠️ Always verify with a qualified CA or tax professional</strong>
+      All GST returns, e-Way Bills, and tax filings generated by LAM must be reviewed and verified by a qualified Chartered Accountant or tax professional before filing. Stratix Ecosystem is not liable for any tax penalties, interest, or legal consequences arising from filings made using LAM-generated data.
+    </div>
+    <p>The accuracy of GST calculations depends entirely on the data you enter. Ensure your GSTIN, HSN codes, tax rates, and invoice details are correct before filing.</p>
+  </section>
+
+  <section id="t11">
+    <h2><span class="num">11</span> Payment Processing</h2>
+    <p>LAM's Razorpay integration enables you to request payments from customers via Razorpay's hosted checkout. By using this feature:</p>
+    <ul>
+      <li>You agree to <a href="https://razorpay.com/terms/" target="_blank" style="color:var(--brand);">Razorpay's Terms of Service</a></li>
+      <li>You are responsible for your Razorpay account, its KYC compliance, and all transactions processed through it</li>
+      <li>Stratix Ecosystem is not a payment processor and does not handle, store, or process any payment card data</li>
+      <li>Payment disputes, refunds, and chargebacks are governed by your Razorpay merchant agreement</li>
+    </ul>
+  </section>
+
+  <section id="t12">
+    <h2><span class="num">12</span> Termination</h2>
+    <p>Since LAM is a locally-installed PWA with no mandatory account, you may stop using the application at any time by clearing your browser data.</p>
+    <p>Stratix Ecosystem reserves the right to discontinue development of LAM, release updates that modify functionality, or change these Terms at any time. We will provide reasonable notice of material changes through the application or via our contact email addresses.</p>
+  </section>
+
+  <section id="t13">
+    <h2><span class="num">13</span> Governing Law and Dispute Resolution</h2>
+    <p>These Terms shall be governed by and construed in accordance with the laws of India. Any disputes arising from or in connection with these Terms shall be subject to the exclusive jurisdiction of the courts at <strong>Kottayam, Kerala, India</strong>.</p>
+    <p>Before initiating any legal proceedings, both parties agree to attempt to resolve any dispute amicably through direct communication for a period of 30 days.</p>
+  </section>
+
+  <section id="t14">
+    <h2><span class="num">14</span> Changes to Terms</h2>
+    <p>Stratix Ecosystem reserves the right to modify these Terms at any time. When we do, we will update the "Last Updated" date at the top of this page. For significant changes, we will display a notice within the LAM application.</p>
+    <p>Continued use of LAM after updated Terms are posted constitutes your acceptance of the revised Terms. If you do not agree to the revised Terms, stop using the application.</p>
+  </section>
+
+  <section id="t15">
+    <h2><span class="num">15</span> Contact Us</h2>
+    <p>For any questions about these Terms, to report a legal concern, or to request permissions beyond these Terms:</p>
+    <div class="contact-grid">
+      <div class="contact-card">
+        <div class="icon">📧</div>
+        <div class="label">General Enquiries</div>
+        <a href="mailto:stratixapp@gmail.com">stratixapp@gmail.com</a>
+      </div>
+      <div class="contact-card">
+        <div class="icon">🏢</div>
+        <div class="label">Business & Legal</div>
+        <a href="mailto:stratixecosystem1@gmail.com">stratixecosystem1@gmail.com</a>
+      </div>
+      <div class="contact-card">
+        <div class="icon">📈</div>
+        <div class="label">Growth & Support</div>
+        <a href="mailto:stratixgrowup@gmail.com">stratixgrowup@gmail.com</a>
+      </div>
+    </div>
+    <p style="margin-top:16px;font-size:13px;color:var(--text-3);">
+      <strong>Stratix Ecosystem</strong><br>
+      Kottayam, Kerala, India — 686 001<br>
+      Response time: within 3 business days
+    </p>
+  </section>
+
+</div>
+
+<footer>
+  <div class="links">
+    <a href="dashboard.html">← Back to LAM</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="mailto:stratixapp@gmail.com">Contact Us</a>
+  </div>
+  <p>© 2025 Stratix Ecosystem, Kottayam, Kerala. All rights reserved.<br>
+  LAM v9 — Logistics Assets Management · Built with ♥ for Kerala SMBs</p>
+</footer>
+
+</body>
+</html>

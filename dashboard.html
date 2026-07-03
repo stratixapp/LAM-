@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Cache version bump for v9 GST release — remove after one deploy cycle -->
+  <script>
+    // ── Earliest possible LAM stub so inline onclick="LAM.x()" never throws
+    window.LAM = {
+      toggleSidebar:     function() { document.getElementById('sidebar').classList.toggle('collapsed'); document.getElementById('main-content').classList.toggle('expanded'); },
+      showUpgradeModal:  function() { var m=document.getElementById('upgrade-modal'); if(m) m.classList.remove('hidden'); },
+      closeModal:        function(id) { var m=document.getElementById(id); if(m) m.classList.add('hidden'); },
+      showNotifications: function() { alert('No new notifications.'); },
+      showUserMenu:      function() {},
+      initiateUpgrade:   function() {},
+      globalSearch:      function() {},
+      connectBackend:    function() { console.warn('LAM: module not ready yet'); },
+    };
+    (function() {
+      var REQUIRED_VERSION = 'lam-v9-gst-r3'; // r3: lam-db v9 all-stores fix
+      var storedVersion = localStorage.getItem('lam_cache_version');
+      if (storedVersion !== REQUIRED_VERSION) {
+        localStorage.setItem('lam_cache_version', REQUIRED_VERSION);
+        // Unregister all service workers and clear all caches
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(regs) {
+            regs.forEach(function(reg) { reg.unregister(); });
+          });
+        }
+        if ('caches' in window) {
+          caches.keys().then(function(keys) {
+            keys.forEach(function(key) { caches.delete(key); });
+          }).then(function() {
+            // Reload once caches are cleared
+            window.location.reload(true);
+          });
+        }
+      }
+    })();
+  </script>
+
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="assets/icons/icon-96.png">
+  <link rel="shortcut icon" href="assets/icons/icon-96.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#FFFFFF">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LAM">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAM — Dashboard</title>  <link rel="stylesheet" href="css/core/variables.css">
+  <link rel="stylesheet" href="css/core/reset.css">
+  <link rel="stylesheet" href="css/core/layout.css">
+  <link rel="stylesheet" href="css/core/animations.css">
+  <link rel="stylesheet" href="css/components/buttons.css">
+  <link rel="stylesheet" href="css/components/forms.css">
+  <link rel="stylesheet" href="css/components/cards.css">
+  <link rel="stylesheet" href="css/components/tables.css">
+  <link rel="stylesheet" href="css/components/modals.css">
+  <link rel="stylesheet" href="css/modules/utilities.css">
+  <link rel="stylesheet" href="css/modules/migration.css">
+  <style>
+    /* ── Dashboard-specific component styles v9 ── */
+
+    /* ── Upgrade banner ─────────────────────────────────────── */
+    .upgrade-banner {
+      background: linear-gradient(135deg, #EFF6FF 0%, #F5F3FF 100%);
+      border: 1px solid rgba(37,99,235,0.18);
+      border-radius: var(--radius-xl);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .upgrade-banner .icon  { font-size: 20px; flex-shrink: 0; }
+    .upgrade-banner .text  { flex: 1; min-width: 0; }
+    .upgrade-banner .title { font-weight: 700; font-size: 13px; color: var(--text-primary); }
+    .upgrade-banner .desc  { font-size: 11.5px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* ── Activity feed ──────────────────────────────────────── */
+    .activity-list { display: flex; flex-direction: column; }
+    .activity-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .activity-content { flex: 1; min-width: 0; }
+    .activity-text { font-size: 12.5px; color: var(--text-primary); line-height: 1.45; }
+    .activity-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── Quick actions grid ─────────────────────────────────── */
+    .quick-actions { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+    .quick-action {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      text-align: center;
+      text-decoration: none;
+    }
+    .quick-action:hover {
+      border-color: rgba(37,99,235,0.20);
+      background: var(--brand-primary-lt);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(37,99,235,0.10);
+    }
+    .quick-action .qa-icon  {
+      font-size: 20px;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-base);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      transition: all var(--transition-base);
+    }
+    .quick-action:hover .qa-icon {
+      background: rgba(37,99,235,0.10);
+      border-color: rgba(37,99,235,0.18);
+    }
+    .quick-action .qa-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    /* ── Locked module overlay ──────────────────────────────── */
+    .module-locked { position: relative; overflow: hidden; }
+    .module-locked::after {
+      content: '🔒 Upgrade to unlock';
+      position: absolute;
+      inset: 0;
+      background: rgba(248,250,252,0.88);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      letter-spacing: 0.1px;
+    }
+
+    /* ── Page transition ─────────────────────────────────────── */
+    #page-content { animation: fadeInUp 0.24s var(--ease-out) forwards; }
+
+    /* ── Responsive quick-actions ────────────────────────────── */
+    @media (max-width: 768px) {
+      .quick-actions { grid-template-columns: repeat(2,1fr); }
+    }
+    @media (max-width: 480px) {
+      .quick-actions { grid-template-columns: repeat(2,1fr); gap: 8px; }
+    }
+  </style>
+  <!-- Critical: load DB engine early so module script doesn't race against it -->
+  <script src="assets/libs/lam-crypto.js" defer></script>
+  <script src="assets/libs/lam-db.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Logo -->
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">LAM</div>
+      <div>
+        <div class="sidebar-brand-name">LAM</div>
+        <div class="sidebar-brand-tag">Logistics · Assets · Management</div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="sidebar-nav" id="sidebar-nav">
+
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item active" data-route="dashboard">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+
+      <div class="nav-section-label">Foundation</div>
+      <a class="nav-item" data-route="company">
+        <span class="nav-icon">🏢</span>
+        <span class="nav-label">Company & Branches</span>
+      </a>
+      <a class="nav-item" data-route="employees">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">Employees</span>
+      </a>
+      <a class="nav-item" data-route="hr">
+        <span class="nav-icon">⏰</span>
+        <span class="nav-label">HR — Attendance & Payroll</span>
+      </a>
+      <a class="nav-item" data-route="payslip">
+        <span class="nav-icon">🧾</span>
+        <span class="nav-label">Payslip Generator</span>
+      </a>
+      <a class="nav-item" data-route="vendors">
+        <span class="nav-icon">🤝</span>
+        <span class="nav-label">Vendors / Suppliers</span>
+      </a>
+      <a class="nav-item" data-route="customers">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">Customers</span>
+      </a>
+      <a class="nav-item" data-route="crm">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">CRM Hub — Tickets & SLA</span>
+      </a>
+
+      <div class="nav-section-label">Inventory</div>
+      <a class="nav-item" data-route="products">
+        <span class="nav-icon">📦</span>
+        <span class="nav-label">Products / Items</span>
+      </a>
+      <a class="nav-item" data-route="categories">
+        <span class="nav-icon">🗂</span>
+        <span class="nav-label">Categories & Units</span>
+      </a>
+      <a class="nav-item" data-route="warehouses">
+        <span class="nav-icon">🏭</span>
+        <span class="nav-label">Warehouses</span>
+      </a>
+      <a class="nav-item" data-route="inventory">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Stock / Inventory</span>
+      </a>
+
+      <div class="nav-section-label" id="nav-wms-label">Warehouse Ops
+        <span class="badge badge-gray" style="font-size:9px;padding:1px 7px;vertical-align:middle;margin-left:4px;" id="wms-plan-tag"></span>
+      </div>
+      <a class="nav-item" data-route="grn" id="nav-grn">
+        <span class="nav-icon">📥</span>
+        <span class="nav-label">Goods Receipt (GRN)</span>
+        <span class="nav-lock" id="lock-grn">🔒</span>
+      </a>
+      <a class="nav-item" data-route="wms" id="nav-wms">
+        <span class="nav-icon">🏭</span>
+        <span class="nav-label">WMS Hub (9 Tools)</span>
+        <span class="nav-lock" id="lock-wms">🔒</span>
+      </a>
+      <a class="nav-item" data-route="orders" id="nav-orders">
+        <span class="nav-icon">🛒</span>
+        <span class="nav-label">Sales Orders</span>
+        <span class="nav-lock" id="lock-orders">🔒</span>
+      </a>
+      <a class="nav-item" data-route="orderops" id="nav-orderops">
+        <span class="nav-icon">📦</span>
+        <span class="nav-label">Order Ops (Pick/Pack/Returns)</span>
+        <span class="nav-lock" id="lock-orderops">🔒</span>
+      </a>
+      <a class="nav-item" data-route="procurement" id="nav-procurement">
+        <span class="nav-icon">🔄</span>
+        <span class="nav-label">Purchase Orders</span>
+        <span class="nav-lock" id="lock-procurement">🔒</span>
+      </a>
+      <a class="nav-item" data-route="procadvanced" id="nav-procadvanced">
+        <span class="nav-icon">✅</span>
+        <span class="nav-label">Procurement Hub (Approvals)</span>
+        <span class="nav-lock" id="lock-procadvanced">🔒</span>
+      </a>
+      <a class="nav-item" data-route="pipeline" id="nav-pipeline">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label">Sales Pipeline & CRM</span>
+        <span class="nav-lock" id="lock-pipeline">🔒</span>
+      </a>
+      <a class="nav-item" data-route="gst" id="nav-gst">
+        <span class="nav-icon">🏛️</span>
+        <span class="nav-label">GST Suite (eInvoice/GSTR)</span>
+        <span class="nav-lock" id="lock-gst">🔒</span>
+      </a>
+      <a class="nav-item" data-route="quality" id="nav-quality">
+        <span class="nav-icon">🔍</span>
+        <span class="nav-label">Quality Control</span>
+        <span class="nav-lock" id="lock-quality">🔒</span>
+      </a>
+      <a class="nav-item" data-route="pos" id="nav-pos">
+        <span class="nav-icon">🛒</span>
+        <span class="nav-label">Point of Sale (POS)</span>
+        <span class="nav-lock" id="lock-pos">🔒</span>
+      </a>
+
+      <div class="nav-section-label">Transport
+        <span class="badge badge-red" style="font-size:9px;padding:1px 7px;vertical-align:middle;margin-left:4px;" id="tms-plan-tag">Enterprise</span>
+      </div>
+      <a class="nav-item locked" data-route="fleet" id="nav-ent-fleet">
+        <span class="nav-icon">🚛</span>
+        <span class="nav-label">Fleet / Vehicles</span>
+        <span class="nav-lock" id="lock-ent-fleet">🔒</span>
+      </a>
+      <a class="nav-item locked" data-route="drivers" id="nav-ent-drivers">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">Drivers</span>
+        <span class="nav-lock" id="lock-ent-drivers">🔒</span>
+      </a>
+      <a class="nav-item locked" data-route="trips" id="nav-ent-trips">
+        <span class="nav-icon">🗺️</span>
+        <span class="nav-label">Trip Planning</span>
+        <span class="nav-lock" id="lock-ent-trips">🔒</span>
+      </a>
+      <!-- Driver-only view: hidden for all other roles by lam-users.js role nav -->
+      <a class="nav-item" data-route="my-trips" id="nav-my-trips" style="display:none;">
+        <span class="nav-icon">🚗</span>
+        <span class="nav-label">My Trips</span>
+      </a>
+
+      <div class="nav-section-label">Finance
+        <span class="badge badge-red" style="font-size:9px;padding:1px 7px;vertical-align:middle;margin-left:4px;">Enterprise</span>
+      </div>
+      <a class="nav-item locked" data-route="finance" id="nav-ent-finance">
+        <span class="nav-icon">💰</span>
+        <span class="nav-label">Finance & Billing</span>
+        <span class="nav-lock" id="lock-ent-finance">🔒</span>
+      </a>
+      <a class="nav-item locked" data-route="finadvanced" id="nav-ent-finadvanced">
+        <span class="nav-icon">💳</span>
+        <span class="nav-label">Credit, Currency & Budget</span>
+        <span class="nav-lock" id="lock-ent-finadvanced">🔒</span>
+      </a>
+      <a class="nav-item locked" data-route="accounting" id="nav-ent-accounting">
+        <span class="nav-icon">📒</span>
+        <span class="nav-label">Accounting Engine (COA/GL)</span>
+        <span class="nav-lock" id="lock-ent-accounting">🔒</span>
+      </a>
+      <a class="nav-item locked" data-route="bankrecon" id="nav-ent-bankrecon">
+        <span class="nav-icon">🏦</span>
+        <span class="nav-label">Bank Reconciliation</span>
+        <span class="nav-lock" id="lock-ent-bankrecon">🔒</span>
+      </a>
+
+      <div class="nav-section-label">Manufacturing
+        <span class="badge badge-red" style="font-size:9px;padding:1px 7px;vertical-align:middle;margin-left:4px;">Enterprise</span>
+      </div>
+      <a class="nav-item locked" data-route="manufacturing" id="nav-ent-manufacturing">
+        <span class="nav-icon">🏭</span>
+        <span class="nav-label">Manufacturing / MRP / BOM</span>
+        <span class="nav-lock" id="lock-ent-manufacturing">🔒</span>
+      </a>
+
+      <div class="nav-section-label">Services & Projects
+        <span class="badge badge-red" style="font-size:9px;padding:1px 7px;vertical-align:middle;margin-left:4px;">Enterprise</span>
+      </div>
+      <a class="nav-item locked" data-route="service" id="nav-ent-service">
+        <span class="nav-icon">🔧</span>
+        <span class="nav-label">Service Contracts & Warranty</span>
+        <span class="nav-lock" id="lock-ent-service">🔒</span>
+      </a>
+      <a class="nav-item locked" data-route="projects" id="nav-ent-projects">
+        <span class="nav-icon">📁</span>
+        <span class="nav-label">Project Management</span>
+        <span class="nav-lock" id="lock-ent-projects">🔒</span>
+      </a>
+      <a class="nav-item locked" data-route="multicompany" id="nav-ent-multicompany">
+        <span class="nav-icon">🏢</span>
+        <span class="nav-label">Multi-Company</span>
+        <span class="nav-lock" id="lock-ent-multicompany">🔒</span>
+      </a>
+      <a class="nav-item locked" data-route="apiconfig" id="nav-ent-apiconfig">
+        <span class="nav-icon">🔌</span>
+        <span class="nav-label">API & Integrations</span>
+        <span class="nav-lock" id="lock-ent-apiconfig">🔒</span>
+      </a>
+
+      <div class="nav-section-label">Assets & AI
+        <span class="badge badge-red" style="font-size:9px;padding:1px 7px;vertical-align:middle;margin-left:4px;">Enterprise</span>
+      </div>
+      <a class="nav-item locked" data-route="assets" id="nav-ent-assets">
+        <span class="nav-icon">🔧</span>
+        <span class="nav-label">Asset Management</span>
+        <span class="nav-lock" id="lock-ent-assets">🔒</span>
+      </a>
+      <a class="nav-item locked" data-route="analytics" id="nav-ent-analytics">
+        <span class="nav-icon">🤖</span>
+        <span class="nav-label">AI & Analytics</span>
+        <span class="nav-lock" id="lock-ent-analytics">🔒</span>
+      </a>
+
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-item" data-route="settings">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Settings</span>
+      </a>
+      <a class="nav-item" data-route="migration">
+        <span class="nav-icon">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <path d="M3 10h14M3 10l4-4M3 10l4 4M17 10l-4-4M17 10l-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="nav-label">Data Migration</span>
+      </a>
+      <a class="nav-item" data-route="audit">
+        <span class="nav-icon">📜</span>
+        <span class="nav-label">Audit Logs</span>
+      </a>
+
+    </nav>
+
+    <!-- User Footer -->
+    <div class="sidebar-footer">
+      <div class="user-card" onclick="LAM.showUserMenu()">
+        <div class="user-avatar" id="user-avatar">—</div>
+        <div class="user-info">
+          <div class="user-name" id="user-display-name">Loading…</div>
+          <div class="user-role" id="user-display-role">—</div>
+        </div>
+        <span style="color:var(--text-muted);font-size:12px;">⋯</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN CONTENT ══════════════════════════════════════════ -->
+  <div class="main-content" id="main-content">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="topbar-toggle" onclick="LAM.toggleSidebar()" title="Toggle Sidebar">
+        ☰
+      </button>
+
+      <div class="topbar-breadcrumb">
+        <span>LAM</span>
+        <span class="sep">/</span>
+        <span class="current" id="breadcrumb-current">Dashboard</span>
+      </div>
+
+      <div class="global-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="global-search-input" placeholder="Search anything…" oninput="LAM.globalSearch(this.value)">
+      </div>
+
+      <div class="topbar-right">
+        <!-- LAMCloud sync badge — updated live by lam-cloud.js -->
+        <div id="lam-sync-badge" style="display:none;"></div>
+        <!-- LAMSafety backup badge — updated live by lam-safety.js -->
+        <div id="lam-backup-badge"
+             style="display:inline-flex;align-items:center;gap:5px;
+                    font-size:11px;font-weight:500;padding:4px 10px;
+                    border-radius:20px;cursor:pointer;transition:all 0.2s;
+                    background:var(--surface-2,#1e1e1e);
+                    color:var(--text-secondary,#888);
+                    border:1px solid var(--border-subtle,#333);
+                    white-space:nowrap;flex-shrink:0;"
+             title="Click to backup now"
+             onclick="window.LAMSafety?.performBackup()">
+          <span>💾</span><span>Backup</span>
+        </div>
+        <button class="topbar-btn" onclick="LAM.showNotifications()" title="Notifications">
+          🔔
+          <span class="notif-dot" id="notif-dot"></span>
+        </button>
+        <span id="plan-badge" class="plan-chip" style="cursor:pointer" onclick="LAM.showUpgradeModal()">—</span>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="page-content" id="page-content">
+      <!-- Rendered by Router -->
+      <div style="display:flex;align-items:center;justify-content:center;height:60vh;flex-direction:column;gap:16px;">
+        <div class="spinner spinner-lg"></div>
+        <span style="color:var(--text-muted);font-size:13px;">Initializing LAM…</span>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══ MODALS ════════════════════════════════════════════════ -->
+
+<!-- Upgrade Modal -->
+<div class="modal-backdrop hidden" id="upgrade-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">🚀 Upgrade Your Plan</h3>
+      <button class="modal-close" onclick="LAM.closeModal('upgrade-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;gap:10px;">
+        <!-- Starter -->
+        <div style="background:var(--bg-elevated);border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:16px 18px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+          <div>
+            <div style="font-weight:700;font-size:14px;color:var(--text-primary);margin-bottom:4px;">Starter</div>
+            <div style="font-size:12px;color:var(--text-secondary);">5 users · Phase 1 (10 tools) · Warehouse, Inventory, Vendors, Customers</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <span style="font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--brand-primary);">₹999</span>
+            <span style="font-size:11px;color:var(--text-muted);">/mo</span>
+          </div>
+        </div>
+        <!-- Growth -->
+        <div style="background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.22);border-radius:var(--radius-lg);padding:16px 18px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-weight:700;font-size:14px;color:var(--text-primary);">Growth</span>
+              <span class="badge badge-blue">Popular</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary);">25 users · Phase 1–3 (30 tools) · + GRN, Dispatch, Orders, Procurement</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <span style="font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--brand-primary);">₹1,499</span>
+            <span style="font-size:11px;color:var(--text-muted);">/mo</span>
+          </div>
+        </div>
+        <!-- Enterprise -->
+        <div style="background:rgba(5,150,105,0.05);border:1px solid rgba(5,150,105,0.2);border-radius:var(--radius-lg);padding:16px 18px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-weight:700;font-size:14px;color:var(--text-primary);">Enterprise</span>
+              <span class="badge badge-green">All 70 Tools</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary);">Unlimited users · All phases · AI Forecasting · Transport · Finance · Assets</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <span style="font-family:var(--font-display);font-size:20px;font-weight:800;color:#34D399;">₹1,999</span>
+            <span style="font-size:11px;color:var(--text-muted);">/mo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="LAM.closeModal('upgrade-modal')">Maybe later</button>
+      <button class="btn btn-primary" onclick="LAM.initiateUpgrade()">Upgrade Now</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- ══ SCRIPTS ═══════════════════════════════════════════════ -->
+<script type="module">
+  // Debug: log any module load error with the exact URL
+  window.addEventListener('error', e => {
+    if (e.filename) console.error('MODULE LOAD FAIL — exact URL:', e.filename, 'msg:', e.message);
+  });
+  import { requireAuth, AuthState, logout, ROLE_LABELS, PLANS, PLAN_FEATURES } from './js/core/auth.js';
+  import { Router }  from './js/core/router.js';
+  import { Toast }   from './js/core/notifications.js';
+  import { getInitials, formatCurrency, formatDate, timeAgo, show, hide, setLoading, searchFilter, sortBy, debounce, escHtml, statusBadge } from './js/core/utils.js';
+
+  // ── EAGER: dashboard + locked (needed at startup) ──────────
+  import { renderDashboard } from './js/modules/analytics/dashboard.js';
+  import { renderLocked }    from './js/modules/admin/locked.js';
+
+  // ── LAZY: loads a module only when user navigates to it ───
+  const lazy = (path, fn) => async (container, params) => {
+    const mod = await import(path);
+    return mod[fn](container, params);
+  };
+
+  // ── Wait for LAMDB to be ready (loaded via <head defer>) ────
+  // lam-db.js is deferred from <head> so it runs before this module,
+  // but we still await init() to ensure the IDBDatabase is actually open.
+  await (async () => {
+    const MAX = 50; // 5 seconds max
+    for (let i = 0; i < MAX; i++) {
+      if (window.LAMDB) break;
+      await new Promise(r => setTimeout(r, 100));
+    }
+    if (!window.LAMDB) { console.error('LAMDB not found after 5s'); return; }
+    await window.LAMDB.init().catch(e => console.warn('LAMDB init:', e));
+    await window.LAMDB.requestPersistence?.().catch(() => {});
+  })();
+
+  // ── Auth Guard — handled by LAMUsers (lam-users.js) ───────
+  // LAMUsers.init() runs from its own script tag (Tier 3) and:
+  //   - Shows setup wizard on first run
+  //   - Shows PIN login screen if no active session
+  //   - Restores session from localStorage if valid + not expired
+  //   - Applies role-based nav after login
+  // We still pull a profile fallback for the plan badge + unlock logic below.
+  const ok = await requireAuth('index.html');
+  if (!ok) { window.location.href = 'index.html'; throw 0; }
+
+  const { profile, company } = AuthState;
+
+  // ── Update sidebar user card (also updated by LAMUsers on login) ──
+  // LAMUsers will overwrite these once the user logs in via PIN.
+  // These provide a fallback for the brief moment before LAMUsers fires.
+  document.getElementById('user-avatar').textContent       = getInitials(profile?.name || 'U');
+  document.getElementById('user-display-name').textContent = profile?.name || 'User';
+  document.getElementById('user-display-role').textContent = ROLE_LABELS[profile?.role] || profile?.role || '';
+
+  const plan = company?.plan || PLANS.STARTER;
+  const planLabels = { starter: 'Starter', growth: 'Growth', enterprise: 'Enterprise' };
+  document.getElementById('plan-badge').textContent = planLabels[plan] || 'Enterprise';
+
+  // All features unlocked
+  const canGrowth = true;
+  const canEnterprise = true;
+
+  // Unlock all Growth nav items
+  ['grn','wms','orders','orderops','procurement','procadvanced','pipeline','gst','quality','pos'].forEach(id => {
+    document.getElementById('lock-' + id)?.remove();
+    document.getElementById('nav-' + id)?.classList.remove('locked');
+  });
+
+  const wmsTag = document.getElementById('wms-plan-tag');
+  if (wmsTag) wmsTag.textContent = '';
+
+  // Unlock all Enterprise nav items
+  ['fleet','drivers','trips','finance','finadvanced','assets','analytics','accounting','bankrecon','manufacturing','service','projects','multicompany','apiconfig'].forEach(id => {
+    document.getElementById('lock-ent-' + id)?.remove();
+    document.getElementById('nav-ent-' + id)?.classList.remove('locked');
+  });
+
+  // ── Pre-init LAM stub (needed so onclick="LAM.X()" works during first render) ──
+  window.LAM = { Router, Toast, AuthState,
+    toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+      document.getElementById('main-content').classList.toggle('expanded');
+    },
+    showUpgradeModal()  { document.getElementById('upgrade-modal').classList.remove('hidden'); },
+    closeModal(id)      { document.getElementById(id).classList.add('hidden'); },
+    showNotifications() { Toast.info('Notifications', 'No new notifications.'); },
+    showUserMenu()      { if (confirm(`Sign out as ${profile?.name}?`)) logout(); },
+    globalSearch: () => {},
+    _showSearchDropdown: () => {},
+    connectBackend: () => console.warn('LAM: connectBackend called before module init'),
+  };
+
+  // ── Lazy route wrappers (module loaded only when user clicks nav) ──
+  const L = (route) => (c,p) => renderLocked(c, {...p, route});
+
+  Router.define({
+    // ── Phase 1 Foundation (always available) ───────────────
+    dashboard:    { label: 'Dashboard',                  render: renderDashboard },
+    company:      { label: 'Company & Branches',         render: lazy('./js/modules/admin/company.js',           'renderCompany') },
+    employees:    { label: 'Employees',                  render: lazy('./js/modules/hr/employee.js',             'renderEmployees') },
+    hr:           { label: 'HR — Attendance & Payroll',  render: lazy('./js/modules/hr/advanced.js',             'renderHRAdvanced') },
+    vendors:      { label: 'Vendors',                    render: lazy('./js/modules/procurement/supplier.js',    'renderVendors') },
+    customers:    { label: 'Customers',                  render: lazy('./js/modules/crm/customer.js',            'renderCustomers') },
+    crm:          { label: 'CRM Hub',                    render: lazy('./js/modules/crm/advanced.js',            'renderCRMAdvanced') },
+    products:     { label: 'Products',                   render: lazy('./js/modules/warehouse/inventory.js',     'renderProducts') },
+    categories:   { label: 'Categories & Units',         render: lazy('./js/modules/warehouse/binlocator.js',    'renderCategories') },
+    warehouses:   { label: 'Warehouses',                 render: lazy('./js/modules/warehouse/grn.js',           'renderWarehouses') },
+    inventory:    { label: 'Stock / Inventory',          render: lazy('./js/modules/warehouse/dispatch.js',      'renderInventory') },
+
+    // ── Phase 2/3 Growth+ ───────────────────────────────────
+    grn:          { label: 'Goods Receipt (GRN)',         render: canGrowth ? lazy('./js/modules/warehouse/grn_full.js',          'renderGRN')                 : L('grn') },
+    wms:          { label: 'Warehouse Ops Hub',           render: canGrowth ? lazy('./js/modules/warehouse/wms_advanced.js',      'renderWMSHub')              : L('wms') },
+    orders:       { label: 'Sales Orders',                render: canGrowth ? lazy('./js/modules/orders/salesorder.js',           'renderOrders')              : L('orders') },
+    orderops:     { label: 'Order Operations',            render: canGrowth ? lazy('./js/modules/orders/orderops.js',             'renderOrderOps')            : L('orderops') },
+    procurement:  { label: 'Purchase Orders',             render: canGrowth ? lazy('./js/modules/procurement/purchaseorder.js',   'renderPO')                  : L('procurement') },
+    procadvanced: { label: 'Procurement Hub',             render: canGrowth ? lazy('./js/modules/procurement/advanced.js',        'renderProcurementAdvanced') : L('procadvanced') },
+    dispatch:     { label: 'Dispatch / Issue',            render: canGrowth ? lazy('./js/modules/warehouse/wms_advanced.js',      'renderWMSHub')              : L('dispatch') },
+    pipeline:     { label: 'Sales Pipeline',              render: canGrowth ? lazy('./js/modules/crm/pipeline.js',               'renderSalesPipeline')       : L('pipeline') },
+    gst:          { label: 'GST Suite (eInvoice/GSTR)',   render: canGrowth ? lazy('./js/modules/finance/gst.js',                'renderGSTSuite')            : L('gst') },
+    quality:      { label: 'Quality Control',             render: canGrowth ? lazy('./js/modules/quality/qc.js',                 'renderQualityControl')      : L('quality') },
+    pos:          { label: 'Point of Sale',               render: canGrowth ? lazy('./js/modules/pos/pos.js',                    'renderPOS')                 : L('pos') },
+
+    // ── Phase 4 Transport Enterprise ───────────────────────
+    fleet:        { label: 'Fleet / Vehicles',            render: canEnterprise ? lazy('./js/modules/transport/fleet.js',        'renderFleet')               : L('fleet') },
+    drivers:      { label: 'Drivers',                     render: canEnterprise ? lazy('./js/modules/transport/driver.js',       'renderDrivers')             : L('drivers') },
+    trips:        { label: 'Trip Planning',               render: canEnterprise ? lazy('./js/modules/transport/trip.js',         'renderTrips')               : L('trips') },
+    'my-trips':   { label: 'My Trips',                    render: canEnterprise ? lazy('./js/modules/transport/trip.js',         'renderTrips')               : L('trips') },
+
+    // ── Phase 5 Finance Enterprise ─────────────────────────
+    finance:      { label: 'Finance & Billing',           render: canEnterprise ? lazy('./js/modules/finance/invoice.js',        'renderFinance')             : L('finance') },
+    finadvanced:  { label: 'Finance Advanced',            render: canEnterprise ? lazy('./js/modules/finance/advanced.js',       'renderFinanceAdvanced')     : L('finadvanced') },
+    accounting:   { label: 'Accounting Engine',           render: canEnterprise ? lazy('./js/modules/finance/accounting.js',     'renderAccounting')          : L('accounting') },
+    bankrecon:    { label: 'Bank Reconciliation',         render: canEnterprise ? lazy('./js/modules/finance/bank_recon.js',     'renderBankRecon')           : L('bankrecon') },
+
+    // ── Phase 6 Assets Enterprise ──────────────────────────
+    assets:       { label: 'Asset Management',            render: canEnterprise ? lazy('./js/modules/assets/register.js',        'renderAssets')              : L('assets') },
+
+    // ── Phase 7 AI Enterprise ──────────────────────────────
+    analytics:    { label: 'AI & Analytics',              render: canEnterprise ? lazy('./js/modules/analytics/ai.js',           'renderAnalytics')           : L('analytics') },
+
+    // ── Manufacturing / MRP (Enterprise) ────────────────────
+    manufacturing:{ label: 'Manufacturing / MRP',         render: canEnterprise ? lazy('./js/modules/manufacturing/mrp.js',      'renderManufacturing')       : L('manufacturing') },
+
+    // ── Service Contracts (Enterprise) ──────────────────────
+    service:      { label: 'Service & Contracts',         render: canEnterprise ? lazy('./js/modules/service/contracts.js',      'renderServiceContracts')    : L('service') },
+
+    // ── Project Management (Enterprise) ─────────────────────
+    projects:     { label: 'Project Management',          render: canEnterprise ? lazy('./js/modules/projects/management.js',    'renderProjects')            : L('projects') },
+
+    // ── Multi-Company (Enterprise) ───────────────────────────
+    multicompany: { label: 'Multi-Company',               render: canEnterprise ? lazy('./js/modules/admin/multicompany.js',     'renderMultiCompany')        : L('multicompany') },
+    apiconfig:    { label: 'API & Integrations',          render: canEnterprise ? lazy('./js/modules/admin/api.js',              'renderAPIConfig')           : L('apiconfig') },
+
+    // ── All plans ───────────────────────────────────────────
+    payslip:      { label: 'Payslip Generator',           render: lazy('./js/modules/hr/payslip.js',                            'renderPayslipGenerator') },
+    settings:     { label: 'Settings',                    render: lazy('./js/modules/admin/settings.js',                        'renderSettings') },
+    audit:        { label: 'Audit Logs',                  render: lazy('./js/modules/admin/audit.js',                           'renderAudit') },
+    migration:    { label: 'Data Migration',              render: lazy('./js/modules/admin/migration.js',                       'renderMigration') },
+  });
+
+  // ── Global LAM object (full setup — overwrites stub above) ─
+  window.LAM = {
+    toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+      document.getElementById('main-content').classList.toggle('expanded');
+    },
+
+    showUpgradeModal()  { document.getElementById('upgrade-modal').classList.remove('hidden'); },
+    closeModal(id)      { document.getElementById(id).classList.add('hidden'); },
+
+    initiateUpgrade() {
+      Toast.info('Upgrade', 'Redirecting to billing…');
+      this.closeModal('upgrade-modal');
+    },
+
+    showNotifications() { Toast.info('Notifications', 'No new notifications.'); },
+    showUserMenu() {
+      // Delegate to LAMUsers user menu if available, fallback to old confirm
+      if (window.LAMUsers?.getCurrentUser()) {
+        window.LAMUsers._showUserMenu?.() || window.LAMUsers.logout?.();
+      } else {
+        const confirmed = confirm(`Sign out as ${profile?.name}?`);
+        if (confirmed) logout();
+      }
+    },
+
+    globalSearch: debounce((q) => {
+      if (!q?.trim() || q.length < 2) {
+        const existingDD = document.getElementById('lam-global-dd');
+        if (existingDD) existingDD.remove();
+        return;
+      }
+      if (window.LAMSearch && window.LAMSearch._indexBuilt !== false) {
+        const results = window.LAMSearch.globalSearch(q, { limit: 4 });
+        window.LAM._showSearchDropdown(q, results);
+      } else {
+        // LAMSearch index not built yet
+        Toast.info('Search', `Searching for "${q}"…`);
+      }
+    }, 200),
+
+    _showSearchDropdown(q, results) {
+      const existing = document.getElementById('lam-global-dd');
+      if (existing) existing.remove();
+      if (!results.length) return;
+
+      const input = document.getElementById('global-search-input');
+      if (!input) return;
+
+      const dd = document.createElement('div');
+      dd.id = 'lam-global-dd';
+      const rect = input.getBoundingClientRect();
+      dd.style.cssText = `position:fixed;top:${rect.bottom+4}px;left:${rect.left}px;
+        width:${Math.max(rect.width,320)}px;max-height:400px;overflow-y:auto;
+        background:var(--bg-surface);border:1px solid var(--border-subtle);
+        border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);z-index:9999;padding:8px 0;`;
+
+      const icons = { employees:'👤',products:'📦',customers:'🏢',vendors:'🤝',invoices:'🧾',trips:'🚛',fleet:'🚗',drivers:'👨‍✈️',assets:'🔧',leads:'💡' };
+      const nameFields = ['name','invoiceNumber','tripNumber','vehicleNumber','employeeId'];
+      const subFields  = ['email','phone','sku','department','status','origin','category'];
+
+      results.forEach(({ collection, items }) => {
+        const header = document.createElement('div');
+        header.style.cssText = 'padding:4px 14px;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;';
+        header.textContent = `${icons[collection]||'●'} ${collection.replace(/_/g,' ')}`;
+        dd.appendChild(header);
+
+        items.slice(0,3).forEach(item => {
+          const nameF = nameFields.find(f=>item[f]);
+          const subF  = subFields.find(f=>item[f]);
+          const btn = document.createElement('button');
+          btn.style.cssText = 'width:100%;text-align:left;padding:8px 14px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:1px;';
+          const nameSpan = document.createElement('span');
+          nameSpan.style.cssText = 'font-size:13px;font-weight:500;color:var(--text-primary);';
+          nameSpan.textContent = item[nameF]||item.id?.slice(0,10)||'\u2014';
+          btn.appendChild(nameSpan);
+          if (subF) {
+            const subSpan = document.createElement('span');
+            subSpan.style.cssText = 'font-size:11px;color:var(--text-muted);';
+            subSpan.textContent = item[subF];
+            btn.appendChild(subSpan);
+          }
+          btn.onmouseenter = () => btn.style.background = 'var(--bg-elevated)';
+          btn.onmouseleave = () => btn.style.background = 'none';
+          btn.onclick = () => {
+            dd.remove();
+            document.getElementById('global-search-input').value = '';
+            // Navigate to the collection's route
+            const routeMap = { employees:'employees',products:'inventory',customers:'customers',
+              vendors:'vendors',invoices:'invoices',trips:'trips',fleet:'fleet',drivers:'drivers' };
+            const route = routeMap[collection];
+            if (route) window.LAM.Router.navigate(route);
+          };
+          dd.appendChild(btn);
+        });
+      });
+
+      document.body.appendChild(dd);
+      const close = (e) => { if(!dd.contains(e.target)&&e.target!==input){dd.remove();document.removeEventListener('click',close);} };
+      setTimeout(()=>document.addEventListener('click',close),0);
+    },
+
+    // Exposed utils for modules
+    Toast, getInitials, formatCurrency, formatDate, timeAgo,
+    show, hide, setLoading, searchFilter, sortBy, escHtml, statusBadge,
+    AuthState, Router,
+
+    // DotBase Backend connector (available from module scope)
+    connectBackend: async ({ url, apiKey, projectId }) => {
+      const { connectDotBase, getDotBaseConfig } = await import('./js/core/firebase.js');
+      connectDotBase({ url, apiKey, projectId });
+      window.getDotBaseConfig = getDotBaseConfig;
+      console.log('LAM: Backend connected →', url);
+      if (window.LAMSync) window.LAMSync.Notify?.custom?.('🔗 Backend Connected', `DotBase at ${url}`);
+    },
+  };
+
+  // ── Init Router AFTER window.LAM is fully set ──────────────
+  // Router navigates to dashboard which triggers renderDashboard → 9× dbGetAll.
+  // We defer it briefly so the LAMDB init (happening in the load handler below)
+  // completes first, and LAMUsers gets a head start on the PIN/session restore.
+  // This prevents the IDB race condition that caused "Page Unresponsive" freezes.
+  setTimeout(() => Router.init(), 0);
+
+</script>
+
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+          .then(reg => {
+            console.log('LAM SW registered:', reg.scope);
+            setInterval(() => reg.update(), 60000);
+
+            // When a new SW is found, tell it to skip waiting immediately
+            // so users get fresh JS files without needing to close all tabs
+            reg.addEventListener('updatefound', () => {
+              const newSW = reg.installing;
+              newSW.addEventListener('statechange', () => {
+                if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('LAM SW: new version found, activating...');
+                  newSW.postMessage({ type: 'SKIP_WAITING' });
+                }
+              });
+            });
+          })
+          .catch(err => console.warn('SW registration failed:', err));
+
+        // When SW controller changes (new SW took over), reload once to get fresh files
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            console.log('LAM SW: controller changed, reloading for fresh assets');
+            window.location.reload();
+          }
+        });
+      });
+    }
+
+    // Tier 3 init — IndexedDB, Encryption, LAN Sync
+    window.addEventListener('load', async () => {
+      // LAMDB is already init'd by the module script above (awaited).
+      // Just trigger LAMUsers here — it handles PIN screen + session restore.
+      if (window.LAMUsers) {
+        window.LAMUsers.init().catch(e => console.warn('LAMUsers init:', e));
+      }
+
+      // LAMSync init — offline banner + periodic alerts
+      if (window.LAMSync) {
+        LAMSync.mountOfflineBanner();
+        setTimeout(() => LAMSync.startPeriodicAlerts({ checkEvery: 30 * 60 * 1000 }), 10000);
+      }
+
+      // LAM Assistant — mount floating AI assistant
+      if (window.LAMAssistant) {
+        window.LAMAssistant.mount();
+        console.log('LAM Assistant: mounted ✓');
+      }
+
+      // LAMMaps — init offline tile cache + upgrade GPS
+      if (window.LAMMaps) {
+        window.LAMMaps.upgradeGPSMapTileLoader();
+      }
+
+      // LAMWorker — pre-init worker pool (Tier 6)
+      if (window.LAMWorker && window.LAMWorker.isSupported()) {
+        console.log(`LAM Worker: pool of ${window.LAMWorker.poolSize} workers ready`);
+      }
+
+      // LAMPrint — wire into POS last-sale tracking
+      if (window.LAMPrint) {
+        window._lamLastSale = null; // will be set by POS module on each sale
+        console.log('LAM Print: thermal receipt engine ready');
+      }
+
+      // DotBase Backend: connectBackend is defined in window.LAM (the module script above).
+      // This block intentionally left empty — connectBackend lives on the LAM object.
+
+      // LAN Sync init (optional — starts peer discovery)
+      if (window.LAMLAN) {
+        window.LAMLAN.start({
+          onPeer: (info) => {
+            if (info.type === 'connected') {
+              window.LAMSync?.Notify?.custom?.('🔗 Device Connected', `LAN sync active with ${info.peerId}`);
+            }
+          },
+          onSync: (info) => {
+            console.log(`LAM LAN: synced ${info.count} records from ${info.collection}`);
+          },
+        });
+      }
+
+      // Storage stats (logged to console, shown in settings)
+      if (window.LAMDB) {
+        setTimeout(async () => {
+          const stats = await window.LAMDB.getStorageStats().catch(() => null);
+          if (stats) {
+            window._LAMStorageStats = stats;
+            console.log(`LAM DB: ${stats.totalRecords} records, ${stats.usedMB || '?'}MB used`);
+          }
+        }, 3000);
+      }
+
+      // Build LAMSearch global index (Tier 4)
+      if (window.LAMSearch && window.LAMDB) {
+        setTimeout(async () => {
+          try {
+            const [employees, products, customers, vendors, invoices, trips, fleet, drivers, assets, leads] =
+              await Promise.all([
+                window.LAMDB.dbGetAll('employees').catch(()=>[]),
+                window.LAMDB.dbGetAll('products').catch(()=>[]),
+                window.LAMDB.dbGetAll('customers').catch(()=>[]),
+                window.LAMDB.dbGetAll('vendors').catch(()=>[]),
+                window.LAMDB.dbGetAll('invoices').catch(()=>[]),
+                window.LAMDB.dbGetAll('trips').catch(()=>[]),
+                window.LAMDB.dbGetAll('fleet').catch(()=>[]),
+                window.LAMDB.dbGetAll('drivers').catch(()=>[]),
+                window.LAMDB.dbGetAll('assets').catch(()=>[]),
+                window.LAMDB.dbGetAll('leads').catch(()=>[]),
+              ]);
+            window.LAMSearch.buildIndex({ employees, products, customers, vendors, invoices, trips, fleet, drivers, assets, leads });
+            console.log('LAM Search: global index built ✓');
+          } catch(e) { console.warn('LAM Search index build failed:', e); }
+        }, 4000); // After LAMDB and modules have loaded
+      }
+    });
+  </script>
+  <!-- LAM Zero-Dependency Libraries — Tier 1 -->
+  <script src="assets/libs/lam-pdf.js"></script>
+  <!-- LAM Zero-Dependency Libraries — Tier 2 -->
+  <script src="assets/libs/lam-scanner.js"></script>
+  <script src="assets/libs/lam-camera.js"></script>
+  <script src="assets/libs/lam-gps.js"></script>
+  <script src="assets/libs/lam-sync.js"></script>
+  <!-- LAM Zero-Dependency Libraries — Tier 3 -->
+  <!-- lam-crypto.js and lam-db.js moved to <head defer> for early load -->
+  <script src="assets/libs/lam-lan.js"></script>
+  <!-- LAM Zero-Dependency Libraries — Tier 4 -->
+  <script src="assets/libs/lam-search.js"></script>
+  <script src="assets/libs/lam-ml.js"></script>
+  <script src="assets/libs/lam-excel.js"></script>
+  <script src="assets/libs/lam-charts.js"></script>
+  <!-- LAM Zero-Dependency Libraries — Tier 5 -->
+  <script src="assets/libs/lam-maps.js"></script>
+  <script src="assets/libs/lam-reports.js"></script>
+  <script src="assets/libs/gst-export.js"></script>
+  <script src="assets/libs/lam-users.js"></script>
+  <script src="assets/libs/lam-driver.js"></script>
+  <script src="assets/libs/lam-cloud.js"></script>
+  <script src="assets/libs/lam-safety.js"></script>
+  <script src="assets/libs/lam-assistant.js"></script>
+  <!-- LAM Zero-Dependency Libraries — Tier 6 -->
+  <script src="assets/libs/lam-worker.js"></script>
+  <script src="assets/libs/lam-print.js"></script>
+</body>
+</html>

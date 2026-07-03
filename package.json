@@ -1,0 +1,12 @@
+{
+  "name": "lam-erp",
+  "version": "8.0.0",
+  "description": "LAM ERP — Logistics Assets Management",
+  "scripts": {
+    "start": "npx serve . -p 3000",
+    "dev": "npx serve . -p 3000 --no-clipboard"
+  },
+  "devDependencies": {
+    "acorn": "^8.16.0"
+  }
+}
